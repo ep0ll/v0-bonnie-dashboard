@@ -24,7 +24,7 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from 'recharts'
 
 const organizations = [
   { name: 'Acme Inc.', plan: 'Pro', members: 24, initials: 'AI', color: 'bg-primary' },
@@ -90,6 +90,14 @@ const buildLogs = [
 ]
 
 const buildTrend = [42, 58, 51, 68, 62, 74, 70, 86, 78, 92, 88, 96]
+const buildHealth = [
+  { day: 'Mon', success: 84, failed: 6 }, { day: 'Tue', success: 92, failed: 4 }, { day: 'Wed', success: 88, failed: 7 },
+  { day: 'Thu', success: 96, failed: 3 }, { day: 'Fri', success: 91, failed: 5 }, { day: 'Sat', success: 78, failed: 2 }, { day: 'Sun', success: 86, failed: 4 },
+]
+const resourceUsage = [
+  { time: '00:00', cpu: 34, memory: 52 }, { time: '04:00', cpu: 28, memory: 48 }, { time: '08:00', cpu: 61, memory: 64 },
+  { time: '12:00', cpu: 74, memory: 71 }, { time: '16:00', cpu: 58, memory: 68 }, { time: '20:00', cpu: 46, memory: 59 },
+]
 
 function PaginationBar({ page, pages, setPage }: { page: number; pages: number; setPage: (page: number) => void }) {
   return <Pagination><PaginationContent><PaginationItem><PaginationPrevious onClick={() => setPage(Math.max(1, page - 1))} className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} /></PaginationItem>{Array.from({ length: pages }, (_, index) => index + 1).map((number) => <PaginationItem key={number}><PaginationLink isActive={number === page} onClick={() => setPage(number)} className="cursor-pointer">{number}</PaginationLink></PaginationItem>)}<PaginationItem><PaginationNext onClick={() => setPage(Math.min(pages, page + 1))} className={page === pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} /></PaginationItem></PaginationContent></Pagination>
@@ -98,6 +106,24 @@ function PaginationBar({ page, pages, setPage }: { page: number; pages: number; 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = { Success: 'border-emerald-200 bg-emerald-50 text-emerald-700', Running: 'border-sky-200 bg-sky-50 text-sky-700', Failed: 'border-rose-200 bg-rose-50 text-rose-700', Canceled: 'border-muted bg-muted text-muted-foreground' }
   return <Badge variant="outline" className={styles[status] ?? ''}><span className="mr-1.5 size-1.5 rounded-full bg-current" />{status}</Badge>
+}
+
+function EnhancedCIBuildOverview({ onNavigate }: { onNavigate: (value: string) => void }) {
+  const kpis = [
+    { label: 'Build success rate', value: '96.8%', trend: '+4.2%', note: 'Compared with last month', icon: Check, tone: 'text-emerald-600' },
+    { label: 'Builds this month', value: '1,284', trend: '+18.6%', note: '312 more than August', icon: Rocket, tone: 'text-emerald-600' },
+    { label: 'Avg. build time', value: '2m 14s', trend: '-12.4%', note: 'Faster than last month', icon: Clock3, tone: 'text-emerald-600' },
+    { label: 'Failed builds', value: '41', trend: '-8.1%', note: '3.2% of all builds', icon: Activity, tone: 'text-emerald-600' },
+  ]
+  return <div className="flex flex-col gap-6">
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-medium text-primary">Delivery centre</p><h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">CI/CD overview</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">A focused view of build reliability, delivery speed, and runner resource health.</p></div><Button onClick={() => onNavigate('Builds')}><Rocket data-icon="inline-start" />View build history</Button></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{kpis.map(({ label, value, trend, note, icon: Icon, tone }) => <Card key={label} className="overflow-hidden"><CardContent className="p-5"><div className="flex items-start justify-between gap-3"><p className="text-sm font-medium text-muted-foreground">{label}</p><div className="rounded-md bg-muted p-2"><Icon className="size-4 text-muted-foreground" /></div></div><div className="mt-4 flex items-baseline gap-2"><p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p><span className={`text-xs font-semibold ${tone}`}>{trend}</span></div><p className="mt-1 text-xs text-muted-foreground">{note}</p><div className="mt-4 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full w-3/4 rounded-full bg-primary" /></div></CardContent></Card>)}</div>
+    <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+      <Card><CardHeader><div className="flex items-start justify-between gap-3"><div><CardTitle>Build health</CardTitle><CardDescription>Successful and failed builds over the last 7 days</CardDescription></div><Badge variant="secondary">96.8% healthy</Badge></div></CardHeader><CardContent><ChartContainer config={{ success: { label: 'Successful', color: 'var(--chart-2)' }, failed: { label: 'Failed', color: 'var(--chart-5)' } }} className="h-64 w-full"><BarChart accessibilityLayer data={buildHealth} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} /><YAxis hide domain={[0, 100]} /><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="success" stackId="a" fill="var(--color-success)" radius={[0, 0, 0, 0]} /><Bar dataKey="failed" stackId="a" fill="var(--color-failed)" radius={[4, 4, 0, 0]} /></BarChart></ChartContainer></CardContent></Card>
+      <Card><CardHeader><CardTitle>Runner resources</CardTitle><CardDescription>Average utilization across build runners</CardDescription></CardHeader><CardContent><ChartContainer config={{ cpu: { label: 'CPU', color: 'var(--chart-3)' }, memory: { label: 'Memory', color: 'var(--chart-4)' } }} className="h-64 w-full"><LineChart accessibilityLayer data={resourceUsage} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} /><YAxis hide domain={[0, 100]} /><ChartTooltip content={<ChartTooltipContent />} /><Line type="monotone" dataKey="cpu" stroke="var(--color-cpu)" strokeWidth={2} dot={false} /><Line type="monotone" dataKey="memory" stroke="var(--color-memory)" strokeWidth={2} dot={false} /></LineChart></ChartContainer><div className="mt-3 flex gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-chart-3" />CPU 54%</span><span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-chart-4" />Memory 62%</span></div></CardContent></Card>
+    </div>
+    <Card><CardHeader><div className="flex items-center justify-between gap-3"><div><CardTitle>Build history</CardTitle><CardDescription>Latest builds across all repositories</CardDescription></div><Button variant="ghost" size="sm" onClick={() => onNavigate('Builds')}>See all <ChevronRight data-icon="inline-end" /></Button></div></CardHeader><CardContent className="p-0"><div className="divide-y">{builds.slice(0, 4).map((build) => <button type="button" key={build.id} onClick={() => onNavigate('Build detail')} className="flex w-full flex-col gap-3 p-4 text-left transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-3"><div className="rounded-md bg-muted p-2"><GitCommit className="size-4" /></div><div className="min-w-0"><p className="truncate text-sm font-medium">{build.message}</p><p className="truncate text-xs text-muted-foreground">{build.repo} · {build.branch} · {build.commit} · {build.created}</p></div></div><div className="flex items-center gap-3 pl-11 sm:pl-0"><StatusBadge status={build.status} /><span className="text-xs tabular-nums text-muted-foreground">{build.duration}</span><ChevronRight className="hidden size-4 text-muted-foreground sm:block" /></div></button>)}</div></CardContent></Card>
+  </div>
 }
 
 function CIBuildOverview({ onNavigate }: { onNavigate: (value: string) => void }) {
@@ -157,7 +183,7 @@ export function OrganizationSettings() {
   const paginatedMembers = useMemo(() => members.slice((memberPage - 1) * 4, memberPage * 4), [memberPage])
   const paginatedTeams = useMemo(() => teams.slice((teamPage - 1) * 2, teamPage * 2), [teamPage])
   const navigate = (value: string) => { setActive(value); setMobileOpen(false); if (value === 'Settings') setTab('general'); if (value === 'Members') setTab('members'); if (value === 'Teams') setTab('teams'); if (value === 'Invitations') setTab('invitations') }
-  const pageContent = active === 'Overview' ? <CIBuildOverview onNavigate={navigate} /> : active === 'Builds' ? <BuildsWorkspace onNavigate={navigate} /> : active === 'Build detail' ? <BuildDetail onNavigate={navigate} /> : ['Deployments', 'Environments', 'Pipelines', 'Activity'].includes(active) ? <DeliveryWorkspace section={active} onNavigate={navigate} /> : null
+  const pageContent = active === 'Overview' ? <EnhancedCIBuildOverview onNavigate={navigate} /> : active === 'Builds' ? <BuildsWorkspace onNavigate={navigate} /> : active === 'Build detail' ? <BuildDetail onNavigate={navigate} /> : ['Deployments', 'Environments', 'Pipelines', 'Activity'].includes(active) ? <DeliveryWorkspace section={active} onNavigate={navigate} /> : null
   const nav = <Sidebar active={active} onNavigate={navigate} />
   const tabs = [['general', 'General'], ['members', 'Members'], ['teams', 'Teams'], ['invitations', 'Invitations'], ['danger', 'Danger zone']] as const
 
