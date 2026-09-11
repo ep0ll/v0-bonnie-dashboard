@@ -27,6 +27,7 @@ import {
   Users,
   Workflow,
   X,
+  CreditCard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -42,6 +43,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { BuildDetailTabs } from '@/components/build-detail-tabs'
+import { BillingReport } from '@/components/billing-report'
 
 const builds = [
   { id: '#1842', repo: 'northstar/web', branch: 'main', commit: 'a8f3c21', message: 'Ship organisation permissions', status: 'Success', actor: 'Olivia Rhye', duration: '2m 18s', environment: 'Production', created: '8 min ago', team: 'Web' },
@@ -77,7 +79,7 @@ function DashboardSearch({ onOpenBuild }: { onOpenBuild: () => void }) {
 
 function Sidebar({ active, onNavigate }: { active: string; onNavigate: (value: string) => void }) {
   const delivery = [['Overview', LayoutGrid], ['Builds', Rocket], ['Deployments', Cloud], ['Environments', Server], ['Pipelines', Workflow]] as const
-  const workspace = [['Organisations', Building2], ['Teams', GitBranch], ['Members', Users], ['Settings', Settings2]] as const
+  const workspace = [['Organisations', Building2], ['Teams', GitBranch], ['Members', Users], ['Billing', CreditCard], ['Settings', Settings2]] as const
   const content = <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground"><div className="flex h-16 items-center gap-3 px-5"><div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"><Shield className="size-4" /></div><span className="font-semibold">Northstar</span></div><div className="px-3"><button type="button" onClick={() => toast.success('Acme Inc. selected')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-sidebar-accent"><Avatar className="size-7"><AvatarFallback className="bg-sidebar-primary text-xs text-sidebar-primary-foreground">AI</AvatarFallback></Avatar><span><span className="block text-sm font-medium">Acme Inc.</span><span className="block text-xs text-sidebar-foreground/60">Pro plan</span></span></button></div><nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-6"><NavGroup label="Delivery" items={delivery} active={active} onNavigate={onNavigate} /><NavGroup label="Workspace" items={workspace} active={active} onNavigate={onNavigate} /></nav><div className="border-t border-sidebar-border p-3"><Button variant="ghost" className="w-full justify-start gap-3 px-3 text-sidebar-foreground/70"><CircleHelp data-icon="inline-start" />Help & support</Button><Button variant="ghost" className="w-full justify-start gap-3 px-3 text-sidebar-foreground/70"><Avatar className="size-7"><AvatarFallback className="bg-sidebar-accent text-xs">OR</AvatarFallback></Avatar><span className="truncate">Olivia Rhye</span><Ellipsis className="ml-auto size-4" /></Button></div></div>
   return <><aside className="hidden h-screen w-64 shrink-0 lg:block">{content}</aside><Sheet><SheetTrigger render={<Button variant="outline" size="icon" className="fixed left-4 top-4 z-20 lg:hidden" aria-label="Open navigation"><Menu /></Button>} /><SheetContent side="left" className="w-72 p-0"><SheetTitle className="sr-only">Navigation</SheetTitle>{content}</SheetContent></Sheet></>
 }
@@ -106,7 +108,7 @@ export default function OrganizationSettings() {
   const [active, setActive] = useState('Overview')
   const [notifications, setNotifications] = useState(false)
   const navigate = (value: string) => setActive(value)
-  const main = active === 'Overview' ? <Overview onNavigate={navigate} /> : active === 'Builds' ? <Builds onNavigate={navigate} /> : active === 'Build detail' ? <BuildDetail onNavigate={navigate} /> : <Overview onNavigate={navigate} />
+  const main = active === 'Overview' ? <Overview onNavigate={navigate} /> : active === 'Builds' ? <Builds onNavigate={navigate} /> : active === 'Build detail' ? <BuildDetail onNavigate={navigate} /> : active === 'Billing' ? <BillingReport /> : <Overview onNavigate={navigate} />
   return <div className="flex min-h-screen bg-background"><Sidebar active={active} onNavigate={navigate} /><div className="min-w-0 flex-1"><header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur sm:px-6 lg:px-8"><div className="flex min-w-0 items-center gap-3 pl-12 lg:pl-0"><DashboardSearch onOpenBuild={() => navigate('Build detail')} /><span className="hidden text-sm text-muted-foreground md:block">{active}</span></div><div className="flex items-center gap-2"><Button variant="outline" size="icon" onClick={() => { setNotifications(!notifications); toast.success(notifications ? 'Notifications marked read' : 'You have 2 new notifications') }} aria-label="Notifications"><Bell /><span className="sr-only">Notifications</span></Button><Avatar className="size-8"><AvatarFallback>OR</AvatarFallback></Avatar></div></header>{notifications && <div className="border-b bg-muted/30 px-4 py-3 text-sm text-muted-foreground sm:px-6 lg:px-8">2 new notifications: build #1841 is running and #1840 needs attention.</div>}<main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">{main}</main></div></div>
 }
 
